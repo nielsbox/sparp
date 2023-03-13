@@ -84,7 +84,9 @@ class SharedMemory:
         full = full[:-1] + ">"
         end = {'end': "\r"} if not done else {}
         total = "?" if self.total == -1 else self.total
-        print(f"[{full}{empty}] {self.done}/{total}, success={self.success}, fail={self.fail},  took {round(elapsed, 2)}                            ", **end, flush=True)
+        print(
+            f"[{full}{empty}] {self.done}/{total}, success={self.success}, fail={self.fail},  took {round(elapsed, 2)}                            ",
+            **end, flush=True)
 
 
 async def canceler(shared, source_semaphore, n_consumers):
@@ -161,12 +163,16 @@ async def async_main(configs, source_queue, source_semaphore, sink_queue, shared
     async with RetryClient(
             client_session=aiohttp.ClientSession(
                 skip_auto_headers=["Content-Type"],
-                trace_configs=[trace_config]
+                trace_configs=[trace_config],
+                timeout=aiohttp.ClientTimeout(total=900)
             ),
             retry_options=retry_options,
             raise_for_status=False) as session:
-        consumers = [consumer(source_queue, source_semaphore, sink_queue, session, shared,
-                              ok_status_codes, stop_on_first_fail) for _ in range(max_outstanding_requests)]
+        consumers = [
+            consumer(
+                source_queue, source_semaphore, sink_queue, session, shared,
+                ok_status_codes, stop_on_first_fail)
+            for _ in range(max_outstanding_requests)]
         management_list = [
             updater(shared),
             producer(configs, source_queue, source_semaphore, time_between_requests, shared),
